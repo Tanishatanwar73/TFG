@@ -4,6 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { generateArticleContent } from './src/server/generateArticleHandler.js';
+import { getNewsArticles } from './src/server/newsHandler.js';
 
 dotenv.config();
 
@@ -30,6 +31,16 @@ app.post('/api/generate-article', async (req, res) => {
   } catch (error: any) {
     console.error('Error generating article via Gemini:', error);
     res.status(500).json({ error: error.message || 'Failed to generate article' });
+  }
+});
+
+app.get('/api/news', async (_req, res) => {
+  try {
+    const articles = await getNewsArticles();
+    res.status(200).json({ articles });
+  } catch (error: any) {
+    console.error('Error loading news from NewsAPI:', error);
+    res.status(502).json({ error: error.message || 'Failed to load news' });
   }
 });
 

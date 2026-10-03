@@ -4,11 +4,12 @@ import { MemberCard } from '../../components/directory/MemberCard';
 import { CustomPortfolioModal } from '../../components/features/community/CustomPortfolioModal';
 import { MemberCredentialPackModal } from '../../components/features/community/MemberCredentialPackModal';
 import { InquiryFormModal } from '../../components/features/membership/InquiryFormModal';
-import { INITIAL_MEMBERS } from '../../data/mockData';
 import { directoryService } from '../../services/directoryService';
 
 export const Directory = () => {
-  const [members, setMembers] = useState(INITIAL_MEMBERS);
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [tierFilter, setTierFilter] = useState('All');
@@ -19,23 +20,41 @@ export const Directory = () => {
   const [inquiryMember, setInquiryMember] = useState(null);
 
   useEffect(() => {
-    directoryService
-      .searchMembers({
-        query: searchQuery,
-        role: roleFilter,
-        tier: tierFilter,
-        verified: verificationFilter,
-      })
-      .then((res) => setMembers(res));
+    const fetchMembers = async () => {
+      setLoading(true);
+
+      try {
+        const res = await directoryService.searchMembers({
+          query: searchQuery,
+          role: roleFilter,
+          tier: tierFilter,
+          verified: verificationFilter,
+        });
+
+        setMembers(res || []);
+      } catch (error) {
+        console.error('Error fetching directory members:', error);
+        setMembers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembers();
   }, [searchQuery, roleFilter, tierFilter, verificationFilter]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-zinc-950 dark:text-white">
+        {/* Color forced to #4A3328 in light AND dark mode */}
+        <h1
+          className="font-serif text-3xl sm:text-4xl font-bold tracking-tight !text-[#4A3328]"
+          style={{ color: '#4A3328' }}
+        >
           Syndicate Member Directory
         </h1>
+
         <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
           Verified directory of founders, enterprise operators, and accredited institutional investors across North America, Europe, and Asia.
         </p>
@@ -54,17 +73,38 @@ export const Directory = () => {
         totalResults={members.length}
       />
 
+      {/* Loading */}
+      {loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <div
+              key={item}
+              className="h-64 rounded-2xl bg-zinc-100 dark:bg-zinc-800 animate-pulse"
+            />
+          ))}
+        </div>
+      )}
+
+      {/* No Members */}
+      {!loading && members.length === 0 && (
+        <div className="py-12 text-center text-zinc-500 dark:text-zinc-400">
+          No members found.
+        </div>
+      )}
+
       {/* Member Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {members.map((member) => (
-          <MemberCard
-            key={member.id}
-            member={member}
-            onSelect={(m) => setSelectedMember(m)}
-            onOpenPortfolio={(m) => setSelectedMember(m)}
-          />
-        ))}
-      </div>
+      {!loading && members.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {members.map((member) => (
+            <MemberCard
+              key={member.id}
+              member={member}
+              onSelect={(m) => setSelectedMember(m)}
+              onOpenPortfolio={(m) => setSelectedMember(m)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Portfolio Dossier Modal */}
       {selectedMember && (

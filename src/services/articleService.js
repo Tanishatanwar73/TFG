@@ -1,70 +1,135 @@
-import { NEWS_ARTICLES, INITIAL_MEMBERS } from '../data/mockData';
 import { articlesService as supabaseArticlesService } from './supabase/articlesService';
 import { requestAIGenerateArticle } from './aiArticleService';
 
 export const articleService = {
   async getNewsArticles(category = 'All') {
     try {
-      const live = await supabaseArticlesService.getNewsArticles();
-      if (live && live.length > 0) {
-        if (category === 'All') return live;
-        return live.filter((a) => a.category === category);
+      const articles =
+        await supabaseArticlesService.getNewsArticles();
+
+      const live = articles || [];
+
+      if (category === 'All') {
+        return live;
       }
-    } catch (e) {
-      console.warn('Live news fetch fallback:', e);
+
+      return live.filter(
+        (article) => article.category === category
+      );
+    } catch (error) {
+      console.error(
+        'Failed to fetch news articles from Supabase:',
+        error
+      );
+
+      return [];
     }
-    if (category === 'All') return NEWS_ARTICLES;
-    return NEWS_ARTICLES.filter((a) => a.category === category);
   },
 
   async getArticleById(id) {
-    const list = await this.getNewsArticles('All');
-    return list.find((a) => a.id === id) || null;
+    const articles = await this.getNewsArticles('All');
+
+    return (
+      articles.find((article) => article.id === id) ||
+      null
+    );
   },
 
   async getAllMemberArticles() {
     try {
-      const live = await supabaseArticlesService.getMemberArticles();
-      if (live && live.length > 0) return live;
-    } catch (e) {
-      console.warn('Live member articles fallback:', e);
+      const articles =
+        await supabaseArticlesService.getMemberArticles();
+
+      return articles || [];
+    } catch (error) {
+      console.error(
+        'Failed to fetch member articles from Supabase:',
+        error
+      );
+
+      return [];
     }
-    // Collect from members
-    return INITIAL_MEMBERS.flatMap((m) => m.articles || []);
   },
 
   async getArticlesByMember(subdomain) {
-    const all = await this.getAllMemberArticles();
-    return all.filter((a) => a.authorSubdomain === subdomain);
+    const articles = await this.getAllMemberArticles();
+
+    return articles.filter(
+      (article) => article.authorSubdomain === subdomain
+    );
   },
 
   async createArticle(articleData) {
-    const newArticle = {
-      id: 'art_' + Date.now(),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      views: 1,
-      status: 'published',
-      ...articleData,
-    };
     try {
-      await supabaseArticlesService.createMemberArticle(newArticle);
-    } catch (e) {
-      console.warn('Article create fallback:', e);
+      const newArticle = {
+        ...articleData,
+        views: articleData.views || 0,
+        status: articleData.status || 'published',
+      };
+
+      const createdArticle =
+        await supabaseArticlesService.createMemberArticle(
+          newArticle
+        );
+
+      return createdArticle || newArticle;
+    } catch (error) {
+      console.error(
+        'Failed to create article in Supabase:',
+        error
+      );
+
+      return {
+        success: false,
+        error:
+          error.message || 'Failed to create article',
+      };
     }
-    return newArticle;
   },
 
-  async updateArticleStatus(id, status, feedback = '') {
+  async updateArticleStatus(
+    id,
+    status,
+    feedback = ''
+  ) {
     try {
-      await supabaseArticlesService.updateArticleReviewStatus(id, status, feedback);
-    } catch (e) {
-      console.warn('Article review status update fallback:', e);
+      const result =
+        await supabaseArticlesService.updateArticleStatus(
+          id,
+          status,
+          feedback
+        );
+
+      return (
+        result || {
+          success: true,
+          id,
+          status,
+          feedback,
+        }
+      );
+    } catch (error) {
+      console.error(
+        'Failed to update article status:',
+        error
+      );
+
+      return {
+        success: false,
+        id,
+        status,
+        feedback,
+        error:
+          error.message ||
+          'Failed to update article status',
+      };
     }
-    return { success: true, id, status, feedback };
   },
 
   async generateWithAI(promptParams) {
-    return await requestAIGenerateArticle(promptParams);
+    return await requestAIGenerateArticle(
+      promptParams
+    );
   },
 };
 

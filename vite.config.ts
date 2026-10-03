@@ -14,7 +14,28 @@ export default defineConfig(() => {
           server.middlewares.use((req, res, next) => {
             const url = req.url || '';
             if (!url.startsWith('/api/generate-article')) {
-              return next();
+              if (!url.startsWith('/api/news')) return next();
+
+              if (req.method !== 'GET') {
+                res.statusCode = 405;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+                return;
+              }
+
+              import('./src/server/newsHandler.js').then(({ getNewsArticles }) => getNewsArticles())
+                .then((articles) => {
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ articles }));
+                })
+                .catch((err: any) => {
+                  console.error('[Vite Dev API] News error:', err);
+                  res.statusCode = 502;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: err.message || 'Failed to load news' }));
+                });
+              return;
             }
 
             if (req.method !== 'POST') {

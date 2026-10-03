@@ -1,4 +1,3 @@
-import { INITIAL_MEMBERS, INITIAL_INQUIRIES } from '../data/mockData';
 import { membersService } from './supabase/membersService';
 import { inquiriesService } from './supabase/inquiriesService';
 
@@ -6,49 +5,90 @@ export const founderService = {
   async getAllFounders() {
     try {
       const live = await membersService.getAllMembers();
-      if (live && live.length > 0) return live;
+      return live || [];
     } catch (e) {
-      console.warn('Live members fetch fallback:', e);
+      console.error('Failed to fetch members from Supabase:', e);
+      return [];
     }
-    return INITIAL_MEMBERS;
   },
 
   async getFounderBySubdomain(subdomain) {
     const list = await this.getAllFounders();
-    return list.find((m) => m.subdomain.toLowerCase() === subdomain.toLowerCase()) || null;
+
+    return (
+      list.find(
+        (member) =>
+          member.subdomain?.toLowerCase() === subdomain?.toLowerCase()
+      ) || null
+    );
   },
 
   async getFounderById(id) {
     const list = await this.getAllFounders();
-    return list.find((m) => m.id === id) || null;
+
+    return list.find((member) => member.id === id) || null;
   },
 
   async updateProfile(id, updates) {
     try {
-      await membersService.updateMember(id, updates);
+      const updatedMember = await membersService.updateMember(id, updates);
+
+      if (!updatedMember) {
+        return {
+          success: false,
+          error: 'Supabase did not update the member record.',
+        };
+      }
+
+      return {
+        success: true,
+        ...updates,
+        ...(updatedMember || {}),
+      };
     } catch (e) {
-      console.warn('Live update fallback:', e);
+      console.error('Failed to update member in Supabase:', e);
+
+      return {
+        success: false,
+        error: e.message || 'Failed to update profile',
+      };
     }
-    return { success: true, ...updates };
   },
 
   async getInquiriesForFounder(founderId) {
     try {
-      const live = await inquiriesService.getInquiries();
-      if (live) return live.filter((inq) => inq.targetMemberId === founderId);
+      const inquiries = await inquiriesService.getInquiries();
+
+      if (!inquiries) {
+        return [];
+      }
+
+      return inquiries.filter(
+        (inquiry) => inquiry.targetMemberId === founderId
+      );
     } catch (e) {
-      console.warn('Live inquiries fallback:', e);
+      console.error('Failed to fetch inquiries from Supabase:', e);
+      return [];
     }
-    return INITIAL_INQUIRIES.filter((inq) => inq.targetMemberId === founderId);
   },
 
   async submitInquiry(inquiryData) {
     try {
-      await inquiriesService.createInquiry(inquiryData);
+      const createdInquiry =
+        await inquiriesService.createInquiry(inquiryData);
+
+      return {
+        success: true,
+        ...(createdInquiry || {}),
+      };
     } catch (e) {
-      console.warn('Live inquiry submit fallback:', e);
+      console.error('Failed to submit inquiry to Supabase:', e);
+
+      return {
+        success: false,
+        error: e.message || 'Failed to submit inquiry',
+      };
     }
-    return { success: true, id: 'inq_' + Date.now(), ...inquiryData };
   },
 };
 

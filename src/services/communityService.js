@@ -1,51 +1,83 @@
-import { CHAT_CHANNELS, INITIAL_CHAT_MESSAGES } from '../data/mockData';
 import { chatService as supabaseChatService } from './supabase/chatService';
 
 export const communityService = {
   async getChannels() {
     try {
-      const live = await supabaseChatService.getChannels();
-      if (live && live.length > 0) return live;
-    } catch (e) {
-      console.warn('Live channels fetch fallback:', e);
+      const channels = await supabaseChatService.getChannels();
+
+      return channels || [];
+    } catch (error) {
+      console.error(
+        'Failed to fetch chat channels from Supabase:',
+        error
+      );
+
+      return [];
     }
-    return CHAT_CHANNELS;
   },
 
   async getMessages(channelId, isDM = false, dmUserId = null) {
     try {
-      const live = await supabaseChatService.getMessages(channelId);
-      if (live && live.length > 0) {
-        if (isDM && dmUserId) {
-          return live.filter((m) => m.isDirectMessage && (m.senderId === dmUserId || m.recipientId === dmUserId));
-        }
-        return live.filter((m) => !m.isDirectMessage && m.channelId === channelId);
-      }
-    } catch (e) {
-      console.warn('Live messages fetch fallback:', e);
-    }
+      const messages = await supabaseChatService.getMessages(channelId);
 
-    if (isDM && dmUserId) {
-      return INITIAL_CHAT_MESSAGES.filter(
-        (m) => m.isDirectMessage && (m.senderId === dmUserId || m.recipientId === dmUserId)
+      if (!messages) {
+        return [];
+      }
+
+      if (isDM && dmUserId) {
+        return messages.filter(
+          (message) =>
+            message.isDirectMessage &&
+            (
+              message.senderId === dmUserId ||
+              message.recipientId === dmUserId
+            )
+        );
+      }
+
+      return messages.filter(
+        (message) =>
+          !message.isDirectMessage &&
+          message.channelId === channelId
       );
+    } catch (error) {
+      console.error(
+        'Failed to fetch chat messages from Supabase:',
+        error
+      );
+
+      return [];
     }
-    return INITIAL_CHAT_MESSAGES.filter((m) => !m.isDirectMessage && m.channelId === channelId);
   },
 
   async sendMessage(msgData) {
-    const newMsg = {
-      id: 'msg_' + Date.now(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      reactions: [],
-      ...msgData,
-    };
     try {
-      await supabaseChatService.sendMessage(newMsg);
-    } catch (e) {
-      console.warn('Live send message fallback:', e);
+      const newMessage = {
+        ...msgData,
+        timestamp:
+          msgData.timestamp ||
+          new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        reactions: msgData.reactions || [],
+      };
+
+      const savedMessage =
+        await supabaseChatService.sendMessage(newMessage);
+
+      return savedMessage || newMessage;
+    } catch (error) {
+      console.error(
+        'Failed to send message to Supabase:',
+        error
+      );
+
+      return {
+        success: false,
+        error: error.message || 'Failed to send message',
+      };
     }
-    return newMsg;
   },
 };
 

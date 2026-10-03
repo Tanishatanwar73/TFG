@@ -30,7 +30,7 @@ export const Sidebar = ({ items = [], title = 'Navigation' }) => {
   const navItems = items.length > 0 ? items : defaultItems;
 
   return (
-    <aside className="w-64 shrink-0 border-r border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 p-4 space-y-6">
+    <aside className="hidden md:block w-64 shrink-0 border-r border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 p-4 space-y-6">
       {/* User brief header */}
       {user && (
         <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">

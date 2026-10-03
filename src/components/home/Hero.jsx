@@ -5,7 +5,8 @@ import { Button } from '../common/Button';
 
 export const Hero = ({ onOpenMembershipModal }) => {
   return (
-    <section className="relative overflow-hidden pt-8 pb-10 border-b border-zinc-200 dark:border-zinc-800">
+    <section className="relative overflow-hidden border-b border-amber-200/70 bg-gradient-to-br from-[#fbf7f0] via-white to-[#f1e5d3] pt-12 pb-14 dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-900 dark:to-[#24180d]">
+      <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-amber-200/25 blur-3xl dark:bg-amber-500/10" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
           {/* Main Editorial Header */}
@@ -15,11 +16,11 @@ export const Hero = ({ onOpenMembershipModal }) => {
               <span>THE FOUNDER GRID INTELLIGENCE NETWORK</span>
             </div>
 
-            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-950 dark:text-white leading-[1.1]">
+            <h1 className="max-w-2xl font-serif text-4xl font-bold leading-[1.05] tracking-tight text-amber-900 sm:text-5xl lg:text-6xl dark:text-amber-100">
               Where High-Growth Business Meets Capital & Opportunity.
             </h1>
 
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
+            <p className="max-w-2xl text-sm leading-relaxed text-zinc-700 sm:text-base dark:text-zinc-300">
               Curated financial dispatches, accredited founder networks, executive publishing subdomains, and institutional deal-flow syndicate.
             </p>
 
@@ -43,8 +44,8 @@ export const Hero = ({ onOpenMembershipModal }) => {
           </div>
 
           {/* Quick Syndicate Metrics */}
-          <div className="grid grid-cols-2 gap-4 lg:w-80 shrink-0">
-            <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+          <div className="grid shrink-0 grid-cols-2 gap-3 lg:w-80">
+            <div className="rounded-xl border border-amber-900/10 bg-white/85 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/85">
               <div className="text-[11px] font-mono text-zinc-400 uppercase">Verified Founders</div>
               <div className="font-serif text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
                 2,480+
@@ -54,7 +55,7 @@ export const Hero = ({ onOpenMembershipModal }) => {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+            <div className="rounded-xl border border-amber-900/10 bg-white/85 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/85">
               <div className="text-[11px] font-mono text-zinc-400 uppercase">Total Syndicate Vol</div>
               <div className="font-serif text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
                 $1.8B+
@@ -64,7 +65,7 @@ export const Hero = ({ onOpenMembershipModal }) => {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+            <div className="rounded-xl border border-amber-900/10 bg-white/85 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/85">
               <div className="text-[11px] font-mono text-zinc-400 uppercase">Subdomains Live</div>
               <div className="font-serif text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
                 850+
@@ -74,7 +75,7 @@ export const Hero = ({ onOpenMembershipModal }) => {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+            <div className="rounded-xl border border-amber-900/10 bg-white/85 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/85">
               <div className="text-[11px] font-mono text-zinc-400 uppercase">Editorial Wire</div>
               <div className="font-serif text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
                 Daily

@@ -137,6 +137,21 @@ CREATE TABLE IF NOT EXISTS public.advertisements (
     active BOOLEAN DEFAULT true
 );
 
+-- 8. Market Ticker Table (values are maintained by the market data job)
+CREATE TABLE IF NOT EXISTS public.market_tickers (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    symbol TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    price TEXT NOT NULL,
+    change TEXT NOT NULL,
+    is_positive BOOLEAN NOT NULL,
+    is_indian_index BOOLEAN DEFAULT false,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN DEFAULT true
+);
+
 -- 8. Visitor Inquiries Table (Direct Inbound Leads)
 CREATE TABLE IF NOT EXISTS public.visitor_inquiries (
     id TEXT PRIMARY KEY,
@@ -184,6 +199,7 @@ ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.advertisements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.visitor_inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.email_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.market_tickers ENABLE ROW LEVEL SECURITY;
 
 -- Public Read Policies (Allow frontend portal readers)
 CREATE POLICY "Public members are viewable by everyone" ON public.members FOR SELECT USING (true);
@@ -192,6 +208,7 @@ CREATE POLICY "News articles are viewable by everyone" ON public.news_articles F
 CREATE POLICY "Chat channels are viewable by everyone" ON public.chat_channels FOR SELECT USING (true);
 CREATE POLICY "Chat messages are viewable by everyone" ON public.chat_messages FOR SELECT USING (true);
 CREATE POLICY "Active advertisements are viewable by everyone" ON public.advertisements FOR SELECT USING (true);
+CREATE POLICY "Active market tickers are viewable by everyone" ON public.market_tickers FOR SELECT USING (is_active = true);
 
 -- Permissive Insert/Update Policies (can be scoped to auth.uid() once Supabase Auth is enabled)
 CREATE POLICY "Allow members insert" ON public.members FOR INSERT WITH CHECK (true);
@@ -210,6 +227,7 @@ CREATE POLICY "Allow inquiries insert" ON public.visitor_inquiries FOR INSERT WI
 CREATE POLICY "Allow inquiries update" ON public.visitor_inquiries FOR UPDATE USING (true);
 
 CREATE POLICY "Allow advertisements update" ON public.advertisements FOR UPDATE USING (true);
+CREATE POLICY "Allow market tickers update" ON public.market_tickers FOR UPDATE USING (true);
 CREATE POLICY "Allow email notifications insert" ON public.email_notifications FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow email notifications select" ON public.email_notifications FOR SELECT USING (true);
 

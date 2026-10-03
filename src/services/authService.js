@@ -1,78 +1,274 @@
-import { INITIAL_MEMBERS } from '../data/mockData';
+import { getSupabase } from '../lib/supabase/client';
+import { membersService } from './supabase/membersService';
 
 const AUTH_STORAGE_KEY = 'tfg_current_user';
 
 export const authService = {
-  getCurrentUser() {
+  async getCurrentUser() {
     try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.warn('Failed to parse stored user:', e);
+      const supabase = getSupabase();
+
+      if (!supabase) {
+        return null;
+      }
+
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        return null;
+      }
+
+      const members = await membersService.getAllMembers();
+
+      const member = members?.find(
+        (item) =>
+          item.id === user.id ||
+          item.email?.toLowerCase() === user.email?.toLowerCase()
+      );
+
+      if (member) {
+        this.setCurrentUser(member);
+        return member;
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+      };
+    } catch (error) {
+      console.error('Failed to get current user:', error);
+      return null;
     }
-    // Default to the first premier founder (Elena Vance) as default logged in executive
-    return INITIAL_MEMBERS[0];
   },
 
   setCurrentUser(user) {
     if (!user) {
       localStorage.removeItem(AUTH_STORAGE_KEY);
-    } else {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+      return;
     }
+
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify(user)
+    );
   },
 
   async login(email, password) {
-    await new Promise((r) => setTimeout(r, 400));
-    // Find matching member or create a guest session
-    const existing = INITIAL_MEMBERS.find((m) => m.email.toLowerCase() === email.toLowerCase());
-    if (existing) {
-      this.setCurrentUser(existing);
-      return { success: true, user: existing };
-    }
+    try {
+      const supabase = getSupabase();
 
-    // Default founder credentials if not found
-    const newUser = {
-      ...INITIAL_MEMBERS[0],
-      email,
-      name: email.split('@')[0].replace(/[._]/g, ' '),
-    };
-    this.setCurrentUser(newUser);
-    return { success: true, user: newUser };
+      if (!supabase) {
+        return {
+          success: false,
+          error: 'Supabase is not configured.',
+        };
+      }
+
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const authUser = data.user;
+
+      const members = await membersService.getAllMembers();
+
+      const member = members?.find(
+        (item) =>
+          item.id === authUser.id ||
+          item.email?.toLowerCase() === email.toLowerCase()
+      );
+
+      const user =
+        member || {
+          id: authUser.id,
+          email: authUser.email,
+        };
+
+      this.setCurrentUser(user);
+
+      return {
+        success: true,
+        user,
+      };
+    } catch (error) {
+      console.error('Login failed:', error);
+
+      return {
+        success: false,
+        error: error.message || 'Login failed',
+      };
+    }
   },
 
-  async register({ name, email, password, company, role = 'Founder', tier = 'founder_pro' }) {
-    await new Promise((r) => setTimeout(r, 500));
-    const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'newfounder';
-    const newUser = {
-      id: 'usr_' + Date.now(),
-      name,
-      email,
-      role,
-      tier,
-      company: company || `${name} Ventures`,
-      title: 'Founder & CEO',
-      subdomain,
-      bio: `Building high-growth ventures at the intersection of business and innovation.`,
-      avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`,
-      verified: tier !== 'free',
-      publishedArticlesCount: 0,
-      monthlyQuota: tier === 'executive_fellow' ? 20 : 5,
-      quotaUsed: 0,
-      stats: { valuation: '$10M', revenue: '$1.2M', totalRaised: '$2.5M', employees: '12' },
-      articles: [],
-      caseStudies: [],
-    };
-    this.setCurrentUser(newUser);
-    return { success: true, user: newUser };
+  async register({
+    name,
+    email,
+    password,
+    company,
+    role = 'Founder',
+    tier = 'founder_pro',
+  }) {
+    try {
+      const supabase = getSupabase();
+
+      if (!supabase) {
+        return {
+          success: false,
+          error: 'Supabase is not configured.',
+        };
+      }
+
+      const { data, error } =
+        await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name,
+              company,
+              role,
+              membershipTier: tier,
+            },
+          },
+        });
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const authUser = data.user;
+
+      if (!authUser) {
+        return {
+          success: false,
+          error: 'Unable to create user account.',
+        };
+      }
+
+      const subdomain =
+        name
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '') ||
+        `founder-${Date.now()}`;
+
+      const member = await membersService.createMember({
+        id: authUser.id,
+        role,
+        name,
+        handle: subdomain,
+        subdomain,
+        title: 'Founder & CEO',
+        companyName: company || `${name} Ventures`,
+        industry: '',
+        location: '',
+        avatarUrl: '',
+        coverUrl: '',
+        bio: '',
+        missionVision: '',
+        coreValues: [],
+        services: [],
+        caseStudies: [],
+        fundingStage: '',
+        metrics: {},
+        isVerified: false,
+        membershipTier: tier,
+        membershipBadge: '',
+        membershipCertificateId: '',
+        membershipJoinedDate: new Date().toISOString(),
+        renewalDate: null,
+        articlesPublishedThisWeek: 0,
+        weeklyArticleQuota:
+          tier === 'executive_fellow' ? 20 : 5,
+        lookingFor: [],
+        canOffer: [],
+        email,
+        phone: '',
+        linkedinUrl: '',
+        privacy: {},
+      });
+
+      this.setCurrentUser(member);
+
+      return {
+        success: true,
+        user: member,
+      };
+    } catch (error) {
+      console.error('Registration failed:', error);
+
+      return {
+        success: false,
+        error: error.message || 'Registration failed',
+      };
+    }
   },
 
   async resetPassword(email) {
-    await new Promise((r) => setTimeout(r, 400));
-    return { success: true, message: `Password reset instructions sent to ${email}` };
+    try {
+      const supabase = getSupabase();
+
+      if (!supabase) {
+        return {
+          success: false,
+          error: 'Supabase is not configured.',
+        };
+      }
+
+      const { error } =
+        await supabase.auth.resetPasswordForEmail(email);
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      return {
+        success: true,
+        message: `Password reset instructions sent to ${email}`,
+      };
+    } catch (error) {
+      console.error(
+        'Password reset failed:',
+        error
+      );
+
+      return {
+        success: false,
+        error:
+          error.message ||
+          'Password reset failed',
+      };
+    }
   },
 
-  logout() {
+  async logout() {
+    try {
+      const supabase = getSupabase();
+
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+
     localStorage.removeItem(AUTH_STORAGE_KEY);
   },
 };

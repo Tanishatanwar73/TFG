@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FounderHeader } from './FounderHeader';
 import { FounderStory } from './FounderStory';
-import { CaseStudies } from './CaseStudies';
+import { CaseStudies, MyPortfolio } from './CaseStudies';
 import { FounderArticles } from './FounderArticles';
 
 export const FounderProfile = ({
@@ -9,9 +9,24 @@ export const FounderProfile = ({
   onOpenCredentialPack,
   onOpenInquiry,
   onSelectArticle,
+  onSave,
   isOwner = false,
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+
   if (!member) return null;
+
+  if (isEditing) {
+    return (
+      <MyPortfolio
+        member={member}
+        onSave={async (draft) => {
+          await onSave?.(draft);
+          setIsEditing(false);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto py-6">
@@ -20,6 +35,7 @@ export const FounderProfile = ({
         onOpenCredentialPack={onOpenCredentialPack}
         onOpenInquiry={onOpenInquiry}
         isOwner={isOwner}
+        onEditDossier={() => setIsEditing(true)}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

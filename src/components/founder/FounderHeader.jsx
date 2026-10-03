@@ -6,6 +6,7 @@ export const FounderHeader = ({
   member,
   onOpenCredentialPack,
   onOpenInquiry,
+  onEditDossier,
   isOwner = false,
 }) => {
   if (!member) return null;
@@ -92,7 +93,7 @@ export const FounderHeader = ({
           )}
 
           {isOwner && (
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" onClick={onEditDossier}>
               Edit Dossier
             </Button>
           )}

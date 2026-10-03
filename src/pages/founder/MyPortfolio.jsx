@@ -5,11 +5,34 @@ import { MemberCredentialPackModal } from '../../components/features/community/M
 import { Button } from '../../components/common/Button';
 import { Award, Globe, ExternalLink, Printer } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { founderService } from '../../services/founderService';
 
 export const MyPortfolio = () => {
   const auth = useAuth();
   const [showCredentialPack, setShowCredentialPack] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const user = auth.user;
+
+  const handleSave = async (draft) => {
+    setSaveError('');
+    const updates = {
+      name: draft.name,
+      title: draft.title,
+      companyName: draft.company,
+      location: draft.location,
+      avatarUrl: draft.avatarUrl,
+      bio: draft.summary,
+      caseStudies: draft.caseStudies,
+    };
+
+    const result = await founderService.updateProfile(user.id, updates);
+    if (!result.success) {
+      setSaveError(result.error || 'Could not save portfolio changes.');
+      throw new Error(result.error || 'Could not save portfolio changes.');
+    }
+
+    auth.updateUser(updates);
+  };
 
   return (
     <DashboardLayout
@@ -27,7 +50,7 @@ export const MyPortfolio = () => {
           </Button>
           <a
             href={`/portfolio/${user?.subdomain}`}
-            target="_blank"
+            target="_blank" 
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950"
           >
@@ -41,8 +64,13 @@ export const MyPortfolio = () => {
       <FounderProfileView
         member={user}
         onOpenCredentialPack={() => setShowCredentialPack(true)}
+        onSave={handleSave}
         isOwner={true}
       />
+
+      {saveError && (
+        <p className="mt-3 text-sm text-red-400" role="alert">{saveError}</p>
+      )}
 
       {showCredentialPack && (
         <MemberCredentialPackModal
