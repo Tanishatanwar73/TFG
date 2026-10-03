@@ -25,6 +25,7 @@ import { MyPortfolio } from '../pages/founder/MyPortfolio';
 import { MyArticles } from '../pages/founder/MyArticles';
 import { CreateArticle } from '../pages/founder/CreateArticle';
 import { Inquiries } from '../pages/founder/Inquiries';
+import { EditPortfolio } from '../pages/founder/EditPortfolio';
 
 // =========================
 // DIRECTORY
@@ -232,7 +233,15 @@ export const AppRoutes = () => {
             <FounderProfile />
           </ProtectedRoute>
         }
-      />
+        />
+      <Route
+       path="/founder/portfolio/edit"
+        element={
+          <ProtectedRoute>
+           <EditPortfolio />
+           </ProtectedRoute>
+         }
+        />
 
       <Route
         path="/founder/portfolio"
